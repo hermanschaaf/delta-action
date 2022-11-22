@@ -31,9 +31,9 @@ export const createPullRequestComment = ({ baseSha, job, metrics, previousMetric
         const graphMetrics = [...previousMetricsArray, { __commit: baseSha, [metric.name]: metric.value }]
         const graph = getGraph({ metrics: graphMetrics, metricName: metric.name, units: metric.units })
         return getMetricLine(metric, previousValue, previousSha, graph);
-      } else {
+      } 
         return getMetricLine(metric, previousValue, previousSha);
-      }
+      
     })
     .join('\n')
   const baseShaLine = baseSha && previousMetricsArray.length !== 0 ? `*Comparing with ${baseSha}*\n\n` : ''
@@ -97,9 +97,8 @@ const getMetricLine = ({ displayName, name, units, value }, previousValue, previ
   const formattedValue = formatValue(value, units)
   if (graph === "") {
     return `- **${displayName || name}**: ${formattedValue}${comparison ? ` ${comparison}` : ''}`
-  } else {
-    return `### ${displayName || name}: ${formattedValue}\n${comparison ? ` ${comparison}` : ''}\n${graph}`
-  }
+  } 
+  return `### ${displayName || name}: ${formattedValue}\n${comparison ? ` ${comparison}` : ''}\n${graph}`
 }
 
 const getMetricLineComparison = (value, previousValue, previousSha) => {
