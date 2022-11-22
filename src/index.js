@@ -23,7 +23,7 @@ const processHeadBranch = async ({ commitSha, headMetrics, job, octokit, owner, 
   })
 }
 
-const processPullRequest = async ({ headMetrics, job, octokit, owner, prNumber, repo, title }) => {
+const processPullRequest = async ({ headMetrics, job, octokit, owner, prNumber, repo, title, style }) => {
   const { baseSha, comments } = await getCommentsFromMainBranch({ octokit, owner, repo })
   const baseMetrics = getMetricsComment({ comments, job })
 
@@ -35,6 +35,7 @@ const processPullRequest = async ({ headMetrics, job, octokit, owner, prNumber, 
     metrics: headMetrics,
     previousMetrics: baseMetrics,
     title,
+    style,
   })
   const existingComments = await octokit.paginate(octokit.rest.issues.listComments, {
     owner,
