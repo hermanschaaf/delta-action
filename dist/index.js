@@ -7887,16 +7887,20 @@ var createHeadBranchComment = ({ commitSha, metrics, job, previousCommit, title 
 ${metricsList}
 ${metadata}`;
 };
-var createPullRequestComment = ({ baseSha, job, metrics, previousMetrics, title }) => {
+var createPullRequestComment = ({ baseSha, job, metrics, previousMetrics, title, style }) => {
   const previousMetricsArray = (Array.isArray(previousMetrics) ? previousMetrics : [previousMetrics]).filter(Boolean).reverse();
   const metadata = `<!--delta:${job}@{}-->`;
   const metricsList = metrics.map((metric) => {
     const comparison = previousMetricsArray.at(-1) ?? {};
     const previousValue = comparison[metric.name];
     const previousSha = comparison["__commit"];
-    const graphMetrics = [...previousMetricsArray, { __commit: baseSha, [metric.name]: metric.value }];
-    const graph = getGraph({ metrics: graphMetrics, metricName: metric.name, units: metric.units });
-    return getMetricLine(metric, previousValue, previousSha, graph);
+    if (style === "graph") {
+      const graphMetrics = [...previousMetricsArray, { __commit: baseSha, [metric.name]: metric.value }];
+      const graph = getGraph({ metrics: graphMetrics, metricName: metric.name, units: metric.units });
+      return getMetricLine(metric, previousValue, previousSha, graph);
+    } else {
+      return getMetricLine(metric, previousValue, previousSha);
+    }
   }).join("\n");
   const baseShaLine = baseSha && previousMetricsArray.length !== 0 ? `*Comparing with ${baseSha}*
 
@@ -7948,9 +7952,13 @@ var getMetricsForHeadBranch = ({ commitSha, job, metrics, previousCommit }) => {
 var getMetricLine = ({ displayName, name, units, value }, previousValue, previousSha, graph = "") => {
   const comparison = getMetricLineComparison(value, previousValue, previousSha);
   const formattedValue = formatValue(value, units);
-  return `### ${displayName || name}: ${formattedValue}
+  if (graph === "") {
+    return `- **${displayName || name}**: ${formattedValue}${comparison ? ` ${comparison}` : ""}`;
+  } else {
+    return `### ${displayName || name}: ${formattedValue}
 ${comparison ? ` ${comparison}` : ""}
 ${graph}`;
+  }
 };
 var getMetricLineComparison = (value, previousValue, previousSha) => {
   if (previousValue === void 0) {
