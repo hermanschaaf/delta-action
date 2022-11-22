@@ -7410,10 +7410,10 @@ var getMetricsForHeadBranch = ({ commitSha, job, metrics, previousCommit }) => {
 var getMetricLine = ({ displayName, name, units, value }, previousValue, previousSha, graph = "") => {
   const comparison = getMetricLineComparison(value, previousValue, previousSha);
   const formattedValue = formatValue(value, units);
-  let line = `### ${displayName || name}: ${formattedValue}
+  let line = `${displayName || name}: ${formattedValue}
 ${comparison ? ` ${comparison}` : ""}`;
   if (graph) {
-    line += `
+    line = `###` + line + `
 ${graph}`;
   }
   return line;
