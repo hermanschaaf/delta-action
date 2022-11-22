@@ -7362,7 +7362,7 @@ var createPullRequestComment = ({ baseSha, job, metrics, previousMetrics, title,
       const graph = getGraph({ metrics: graphMetrics, metricName: metric.name, units: metric.units });
       return getMetricLine(metric, previousValue, previousSha, graph);
     } else {
-      return getMetricLine(metric, previousValue, previousSha, '');
+      return getMetricLine(metric, previousValue, previousSha);
     }
   }).join("\n");
   const baseShaLine = baseSha && previousMetricsArray.length !== 0 ? `*Comparing with ${baseSha}*
@@ -7410,13 +7410,13 @@ var getMetricsForHeadBranch = ({ commitSha, job, metrics, previousCommit }) => {
 var getMetricLine = ({ displayName, name, units, value }, previousValue, previousSha, graph = "") => {
   const comparison = getMetricLineComparison(value, previousValue, previousSha);
   const formattedValue = formatValue(value, units);
-  let line = `${displayName || name}: ${formattedValue}
-${comparison ? ` ${comparison}` : ""}`;
-  if (graph) {
-    line = `###` + line + `
+  if (graph !== "") {
+    return `### ${displayName || name}: ${formattedValue}
+${comparison ? ` ${comparison}` : ""}
 ${graph}`;
+  } else {
+    return `- **${displayName || name}**: ${formattedValue}${comparison ? ` ${comparison}` : ''}`;
   }
-  return line;
 };
 var getMetricLineComparison = (value, previousValue, previousSha) => {
   if (previousValue === void 0) {
@@ -7604,7 +7604,7 @@ var processPullRequest = async ({ headMetrics, job, octokit, owner, prNumber, re
   }
 };
 var run = async function() {
-  const { baseBranch, commitSha, job, owner, prNumber, ref, repo, rootPath, title, token } = getInputs();
+  const { baseBranch, commitSha, job, owner, prNumber, ref, repo, rootPath, title, style, token } = getInputs();
   const headMetrics = await readDeltaFiles(rootPath);
   import_core3.default.debug(`Running job ${job} on ref ${ref}`);
   if (headMetrics.length === 0) {
@@ -7619,7 +7619,7 @@ var run = async function() {
     await processHeadBranch({ commitSha, headMetrics, job, octokit, owner, repo, title });
   } else if (isPR) {
     import_core3.default.debug(`This run is related to PR #${prNumber}`);
-    await processPullRequest({ headMetrics, job, octokit, owner, prNumber, repo, title });
+    await processPullRequest({ headMetrics, job, octokit, owner, prNumber, repo, title, style });
   } else {
     import_core3.default.debug(`This run is not related to a PR or the default branch`);
   }
