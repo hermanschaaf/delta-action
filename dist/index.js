@@ -7897,10 +7897,9 @@ var createPullRequestComment = ({ baseSha, job, metrics, previousMetrics, title,
     if (style === "graph") {
       const graphMetrics = [...previousMetricsArray, { __commit: baseSha, [metric.name]: metric.value }];
       const graph = getGraph({ metrics: graphMetrics, metricName: metric.name, units: metric.units });
-      return getMetricLine(metric, previousValue, previousSha, graph);
-    } else {
-      return getMetricLine(metric, previousValue, previousSha);
+      return getMetricLineWithGraph(metric, previousValue, previousSha, graph);
     }
+    return getMetricLine(metric, previousValue, previousSha);
   }).join("\n");
   const baseShaLine = baseSha && previousMetricsArray.length !== 0 ? `*Comparing with ${baseSha}*
 
@@ -7949,16 +7948,17 @@ var getMetricsForHeadBranch = ({ commitSha, job, metrics, previousCommit }) => {
   }
   return [currentCommitMetrics];
 };
-var getMetricLine = ({ displayName, name, units, value }, previousValue, previousSha, graph = "") => {
+var getMetricLine = ({ displayName, name, units, value }, previousValue, previousSha) => {
   const comparison = getMetricLineComparison(value, previousValue, previousSha);
   const formattedValue = formatValue(value, units);
-  if (graph === "") {
-    return `- **${displayName || name}**: ${formattedValue}${comparison ? ` ${comparison}` : ""}`;
-  } else {
-    return `### ${displayName || name}: ${formattedValue}
+  return `- **${displayName || name}**: ${formattedValue}${comparison ? ` ${comparison}` : ""}`;
+};
+var getMetricLineWithGraph = ({ displayName, name, units, value }, previousValue, previousSha, graph = "") => {
+  const comparison = getMetricLineComparison(value, previousValue, previousSha);
+  const formattedValue = formatValue(value, units);
+  return `### ${displayName || name}: ${formattedValue}
 ${comparison ? ` ${comparison}` : ""}
 ${graph}`;
-  }
 };
 var getMetricLineComparison = (value, previousValue, previousSha) => {
   if (previousValue === void 0) {
