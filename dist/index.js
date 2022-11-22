@@ -7350,16 +7350,20 @@ var createHeadBranchComment = ({ commitSha, metrics, job, previousCommit, title 
 ${metricsList}
 ${metadata}`;
 };
-var createPullRequestComment = ({ baseSha, job, metrics, previousMetrics, title }) => {
+var createPullRequestComment = ({ baseSha, job, metrics, previousMetrics, title, style }) => {
   const previousMetricsArray = (Array.isArray(previousMetrics) ? previousMetrics : [previousMetrics]).filter(Boolean).reverse();
   const metadata = `<!--delta:${job}@{}-->`;
   const metricsList = metrics.map((metric) => {
     const comparison = previousMetricsArray.at(-1) ?? {};
     const previousValue = comparison[metric.name];
     const previousSha = comparison["__commit"];
-    const graphMetrics = [...previousMetricsArray, { __commit: baseSha, [metric.name]: metric.value }];
-    const graph = getGraph({ metrics: graphMetrics, metricName: metric.name, units: metric.units });
-    return getMetricLine(metric, previousValue, previousSha, graph);
+    if (style === 'graph') {
+      const graphMetrics = [...previousMetricsArray, { __commit: baseSha, [metric.name]: metric.value }];
+      const graph = getGraph({ metrics: graphMetrics, metricName: metric.name, units: metric.units });
+      return getMetricLine(metric, previousValue, previousSha, graph);
+    } else {
+      return getMetricLine(metric, previousValue, previousSha, '');
+    }
   }).join("\n");
   const baseShaLine = baseSha && previousMetricsArray.length !== 0 ? `*Comparing with ${baseSha}*
 
@@ -7406,9 +7410,13 @@ var getMetricsForHeadBranch = ({ commitSha, job, metrics, previousCommit }) => {
 var getMetricLine = ({ displayName, name, units, value }, previousValue, previousSha, graph = "") => {
   const comparison = getMetricLineComparison(value, previousValue, previousSha);
   const formattedValue = formatValue(value, units);
-  return `### ${displayName || name}: ${formattedValue}
-${comparison ? ` ${comparison}` : ""}
+  let line = `### ${displayName || name}: ${formattedValue}
+${comparison ? ` ${comparison}` : ""}`;
+  if (graph) {
+    line += `
 ${graph}`;
+  }
+  return line;
 };
 var getMetricLineComparison = (value, previousValue, previousSha) => {
   if (previousValue === void 0) {
@@ -7559,7 +7567,7 @@ var processHeadBranch = async ({ commitSha, headMetrics, job, octokit, owner, re
     body: comment
   });
 };
-var processPullRequest = async ({ headMetrics, job, octokit, owner, prNumber, repo, title }) => {
+var processPullRequest = async ({ headMetrics, job, octokit, owner, prNumber, repo, title, style }) => {
   const { baseSha, comments } = await getCommentsFromMainBranch({ octokit, owner, repo });
   const baseMetrics = getMetricsComment({ comments, job });
   import_core3.default.debug(`Base metrics: ${JSON.stringify(baseMetrics)}`);
@@ -7568,7 +7576,8 @@ var processPullRequest = async ({ headMetrics, job, octokit, owner, prNumber, re
     job,
     metrics: headMetrics,
     previousMetrics: baseMetrics,
-    title
+    title,
+    style
   });
   const existingComments = await octokit.paginate(octokit.rest.issues.listComments, {
     owner,
